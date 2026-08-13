@@ -219,68 +219,109 @@ const WEBCRAFT = {
   title:"مدينة الويب المفقودة",
   zones:[
     {
-      id:"headings", name:"حي العناوين والنصوص", icon:"🏛️", color:"#22e0ff",
-      desc:"أول حي انهار — أعِد العناوين والفقرات لتعيد الحياة للمباني.",
+      id:"basics-text", name:"المرحلة ١: أساسيات النص", icon:"📝", color:"#22e0ff",
+      desc:"أول مراحل المدينة — أعِد الفقرات والعناوين والتنسيق لتعيد الحياة للمباني.",
       missions:[
         {
-          id:"power-shop",
-          title:"إنقاذ متجر الطاقة",
-          brief:"🚨 عنوان «متجر الطاقة» اختفى، والمبنى انطفأ! النظام يحتاجك تعيد بناء ترويسته باستخدام HTML.",
-          learn:{
-            title:"الدرس السريع: العناوين والفقرات",
+          id:"m-paragraphs", title:"إنقاذ شاشة الأخبار",
+          brief:"🚨 شاشة الأخبار في وسط المدينة انطفأت والنصوص انمسحت! أعد بناءها باستخدام الفقرات.",
+          learn:{ title:"الفقرات: p · br · hr · pre",
             points:[
-              "العنوان الرئيسي نكتبه بالوسم <b>&lt;h1&gt;</b> … <b>&lt;/h1&gt;</b>",
-              "الفقرة (النص العادي) نكتبها بالوسم <b>&lt;p&gt;</b> … <b>&lt;/p&gt;</b>",
-              "كل وسم لازم يتسكّر: يفتح <b>&lt;h1&gt;</b> ويقفل بنفس الاسم <b>&lt;/h1&gt;</b>"
+              "الفقرة نكتبها بالوسم <b>&lt;p&gt;</b> … <b>&lt;/p&gt;</b> — والمتصفح يدمج المسافات الزايدة في مسافة وحدة.",
+              "<b>&lt;br&gt;</b> يكسر السطر جوّه الفقرة (وسم يقفل نفسه، بدون إغلاق).",
+              "<b>&lt;hr&gt;</b> يرسم خط أفقي يفصل بين الأقسام.",
+              "<b>&lt;pre&gt;</b> يعرض النص زي ما هو بالظبط (يحافظ على المسافات والأسطر)."
             ],
-            example:"<h1>متجر الطاقة</h1>\n<p>أفضل بطاريات المدينة</p>"
-          },
+            example:'<p>مرحباً في مدينة الويب</p>\n<hr>\n<p>سطر أول<br>سطر ثاني</p>' },
           challenges:[
-            { type:"mcq", diff:1, xp:50,
-              context:"لوحة المتجر فاضية 🔌 لازم نحط العنوان الرئيسي.",
-              prompt:"أي وسم HTML نستخدم للعنوان الرئيسي؟",
-              opts:["&lt;h1&gt;","&lt;p&gt;","&lt;title&gt;","&lt;head&gt;"], answer:0,
-              hints:["العنوان الأكبر والأهم في الصفحة.","يبدأ بحرف h ورقم 1."],
-              explanation:"‏<h1> هو العنوان الرئيسي (الأكبر). <p> للفقرات، و<title> لعنوان تبويب المتصفح."
-            },
-            { type:"missing", diff:1, xp:60,
-              context:"الوسم اللي حوالين اسم المتجر ضايع 🧩",
-              prompt:"اكتب اسم الوسم الناقص (بدون أقواس) باش يصير عنوان رئيسي:",
-              template:"<___>متجر الطاقة</___>", answer:"h1",
-              hints:["نفس وسم العنوان الرئيسي.","حرف واحد ورقم: h1."],
-              explanation:"الناقص هو h1، فيصير: <h1>متجر الطاقة</h1>"
-            },
-            { type:"repair", diff:2, xp:70,
-              context:"في خلل بالكود ⚠️ الوسم يفتح h1 ويقفل h2!",
-              prompt:"صلّح الكود باش يفتح ويقفل بنفس الوسم:",
-              buggy:"<h1>متجر الطاقة</h2>", solution:"<h1>متجر الطاقة</h1>",
-              hints:["الوسم يفتح <h1> فلازم يقفل بنفسه.","غيّر </h2> إلى </h1>."],
-              explanation:"الوسم المفتوح <h1> لازم يُغلق بـ </h1> مش </h2>."
-            },
-            { type:"order", diff:2, xp:70,
-              context:"قطع كود الترويسة اتبعثرت 🧱 رتّبها.",
-              prompt:"رتّب السطور باش تكوّن عنواناً صحيحاً:",
-              lines:["متجر الطاقة","<h1>","</h1>"], correct:[1,0,2],
-              hints:["الوسم المفتوح فوق، ثم النص، ثم الإغلاق.","الترتيب: <h1> ← النص ← </h1>"],
-              explanation:"الترتيب الصحيح:\n<h1>\nمتجر الطاقة\n</h1>"
-            },
-            { type:"write", diff:3, xp:120, boss:true,
-              context:"🏆 المهمة الكبرى: ابنِ ترويسة المتجر كاملة!",
-              prompt:"اكتب HTML فيه: عنوان رئيسي <h1> + فقرة وصف <p>. شوف النتيجة مباشرة وقارنها بالهدف.",
-              starter:"<h1>...</h1>\n<p>...</p>",
-              target:"<h1>متجر الطاقة</h1>\n<p>أفضل بطاريات المدينة</p>",
-              requires:["<h1>[\\s\\S]*?</h1>","<p>[\\s\\S]*?</p>"],
-              hints:["لازم يكون فيه <h1>…</h1> و <p>…</p>.","مثال: <h1>متجر الطاقة</h1> ثم <p>أي وصف</p>"],
-              explanation:"الترويسة = عنوان <h1> + فقرة <p>. أي نص جوّاهم يشتغل."
-            }
+            { type:"mcq", diff:1, xp:50, context:"لوحة الأخبار فاضية 📰 لازم نكتب نص عادي.",
+              prompt:"أي وسم نستخدم للفقرة (النص العادي)؟", opts:["&lt;p&gt;","&lt;br&gt;","&lt;hr&gt;","&lt;pre&gt;"], answer:0,
+              hints:["هو حاوية النص العادي.","حرف واحد: p."], explanation:"‏<p> للفقرة. <br> لكسر السطر، <hr> خط فاصل، <pre> نص محفوظ التنسيق." },
+            { type:"mcq", diff:1, xp:50, context:"عنوان الخبر لازم ينزل سطرين جوّه نفس الفقرة.",
+              prompt:"شن يسوّي الوسم &lt;br&gt;؟", opts:["يكسر السطر جوّه الفقرة","يعمل فقرة جديدة","يحط خط أفقي","يكبّر النص"], answer:0,
+              hints:["ما يعملش فقرة جديدة، بس ينزل سطر.","BR = Break (كسر السطر)."], explanation:"‏<br> يكسر السطر داخل نفس الفقرة، بدون فقرة جديدة." },
+            { type:"missing", diff:1, xp:60, context:"الوسم اللي حوالين الخبر ضايع 🧩",
+              prompt:"اكتب اسم الوسم الناقص (بدون أقواس) باش يصير فقرة:", template:"<___>خبر عاجل من المدينة</___>", answer:"p",
+              hints:["نفس وسم الفقرة.","حرف واحد: p."], explanation:"الناقص p، فيصير: <p>خبر عاجل من المدينة</p>" },
+            { type:"mcq", diff:2, xp:70, context:"عندك جدول نص فيه مسافات مهمة تبي تحافظ عليها زي ما هي.",
+              prompt:"أي وسم يعرض النص بالظبط بمسافاته وأسطره؟", opts:["&lt;pre&gt;","&lt;p&gt;","&lt;br&gt;","&lt;hr&gt;"], answer:0,
+              hints:["Pre = Preformatted (محفوظ التنسيق).","الوحيد اللي ما يدمجش المسافات."], explanation:"‏<pre> يحافظ على كل المسافات والأسطر كما كُتبت." },
+            { type:"write", diff:3, xp:120, boss:true, context:"🏆 المهمة الكبرى: أعد بناء نشرة الأخبار كاملة!",
+              prompt:"اكتب: فقرة ترحيب، ثم خط فاصل <hr>، ثم فقرة فيها سطرين بينهم <br>.",
+              starter:'<p>...</p>\n<hr>\n<p>... <br> ...</p>', target:'<p>مرحباً في مدينة الويب</p>\n<hr>\n<p>خبر أول<br>خبر ثاني</p>',
+              requires:["<p>","</p>","<hr","<br"], hints:["لازم يكون فيه <p>…</p> و <hr> و <br>.","مثال: <p>ترحيب</p><hr><p>سطر1<br>سطر2</p>"],
+              explanation:"النشرة = فقرات <p> + فاصل <hr> + كسر سطر <br>." }
           ],
-          reward:{ xp:250, coins:40, badge:"HTML Explorer", badgeIcon:"🧭" },
-          reveal:"📖 كشفت أول سر: الانهيار بدأ لمّا انطفأت «نواة العناوين» في قلب المدينة… ومازال في المزيد."
+          reward:{ xp:250, coins:40, badge:"Paragraph Pro", badgeIcon:"📰" },
+          reveal:"📖 أول خيط: انطفأت «شاشة النص المركزية» أول ما بدأ الخلل… ومازال في المزيد."
+        },
+        {
+          id:"m-headings", title:"إعادة لافتات المدينة",
+          brief:"🚨 كل لافتات المباني اختفت! المدينة بلا عناوين. أعد العناوين بالوسوم والترتيب الصح.",
+          learn:{ title:"العناوين: h1 حتى h6",
+            points:[
+              "<b>&lt;h1&gt;</b> العنوان الرئيسي — الأكبر والأهم (واحد للصفحة، ومهم للـ SEO).",
+              "<b>&lt;h2&gt;</b> عناوين الأقسام، و<b>&lt;h3&gt;</b> الأقسام الفرعية… لين <b>&lt;h6&gt;</b> الأصغر.",
+              "نمشي بالترتيب وما نقفزش المستويات — ومحرّكات البحث تهتم بالعناوين."
+            ],
+            example:'<h1>متجر الطاقة</h1>\n<h2>العروض</h2>\n<h3>بطاريات</h3>' },
+          challenges:[
+            { type:"mcq", diff:1, xp:50, context:"لافتة المبنى الرئيسي فاضية 🏢", prompt:"أي وسم للعنوان الرئيسي الأكبر؟",
+              opts:["&lt;h1&gt;","&lt;h6&gt;","&lt;p&gt;","&lt;title&gt;"], answer:0,
+              hints:["الأكبر والأهم.","h ورقم 1."], explanation:"‏<h1> هو العنوان الرئيسي الأكبر والأهم." },
+            { type:"mcq", diff:2, xp:60, context:"نبي أصغر عنوان لقسم صغير جداً.", prompt:"أي وسم يعطي أصغر عنوان؟",
+              opts:["&lt;h6&gt;","&lt;h1&gt;","&lt;h2&gt;","&lt;h3&gt;"], answer:0,
+              hints:["الرقم الأكبر = الأصغر حجماً.","h6."], explanation:"العناوين تصغر كل ما زاد الرقم: h1 الأكبر، h6 الأصغر." },
+            { type:"repair", diff:2, xp:70, context:"⚠️ اللافتة تفتح h1 وتقفل h3!", prompt:"صلّح باش يفتح ويقفل بنفس الوسم:",
+              buggy:"<h1>متجر الطاقة</h3>", solution:"<h1>متجر الطاقة</h1>",
+              hints:["الوسم المفتوح <h1> لازم يقفل بنفسه.","غيّر </h3> إلى </h1>."], explanation:"الوسم المفتوح <h1> يُغلق بـ </h1> مش </h3>." },
+            { type:"order", diff:2, xp:80, context:"عناوين اللافتة اتبعثرت 🧱", prompt:"رتّبها من الأهم (الأكبر) للأقل:",
+              lines:["<h3>بطاريات</h3>","<h1>متجر الطاقة</h1>","<h2>العروض</h2>"], correct:[1,2,0],
+              hints:["الأهم فوق: h1 ثم h2 ثم h3.","الترتيب: h1 ← h2 ← h3"], explanation:"الترتيب الهرمي:\n<h1>متجر الطاقة</h1>\n<h2>العروض</h2>\n<h3>بطاريات</h3>" },
+            { type:"write", diff:3, xp:120, boss:true, context:"🏆 ابنِ لافتة المتجر كاملة!",
+              prompt:"اكتب: عنوان رئيسي <h1> + عنوان قسم <h2>.", starter:'<h1>...</h1>\n<h2>...</h2>', target:'<h1>متجر الطاقة</h1>\n<h2>العروض اليوم</h2>',
+              requires:["<h1>","</h1>","<h2>","</h2>"], hints:["لازم <h1>…</h1> و <h2>…</h2>.","مثال: <h1>اسم المتجر</h1><h2>قسم</h2>"],
+              explanation:"اللافتة = عنوان رئيسي <h1> + عنوان قسم <h2>." }
+          ],
+          reward:{ xp:280, coins:45, badge:"Heading Master", badgeIcon:"🏷️" },
+          reveal:"📖 اللافتات رجعت تضيء! لكن لاحظت إن ترتيب العناوين هو مفتاح «شبكة المدينة»…"
+        },
+        {
+          id:"m-formatting", title:"إحياء لوحة الإعلانات",
+          brief:"🚨 لوحة إعلانات المدينة فقدت تنسيقها — كل النص صار عادي بلا تمييز! رجّع التنسيق للكلمات المهمة.",
+          learn:{ title:"تنسيق النص: strong · em · mark · del · sup · sub",
+            points:[
+              "<b>&lt;strong&gt;</b> (أو &lt;b&gt;) نص <b>غامق</b> مهم · <b>&lt;em&gt;</b> (أو &lt;i&gt;) نص <i>مائل</i>.",
+              "<b>&lt;mark&gt;</b> تظليل أصفر · <b>&lt;del&gt;</b> نص مشطوب (محذوف) · <b>&lt;ins&gt;</b> نص مضاف.",
+              "<b>&lt;sup&gt;</b> نص فوقي مثل 10⁶ · <b>&lt;sub&gt;</b> نص تحتي مثل log₂."
+            ],
+            example:'<p>عرض <mark>خاص</mark>: <del>100</del> <strong>60</strong> دينار</p>' },
+          challenges:[
+            { type:"mcq", diff:1, xp:50, context:"كلمة «مهم» في الإعلان لازم تبان غامقة ولها دلالة.", prompt:"أي وسم للنص الغامق المهم؟",
+              opts:["&lt;strong&gt;","&lt;em&gt;","&lt;mark&gt;","&lt;sub&gt;"], answer:0,
+              hints:["Strong = قوي/مهم.","يعطي نص غامق مع دلالة أهمية."], explanation:"‏<strong> نص غامق ومهم دلالياً. <b> غامق بس بدون دلالة." },
+            { type:"mcq", diff:1, xp:60, context:"نبي نظلّل كلمة «تخفيضات» بأصفر تلفت النظر.", prompt:"أي وسم يظلّل النص بأصفر؟",
+              opts:["&lt;mark&gt;","&lt;u&gt;","&lt;em&gt;","&lt;sup&gt;"], answer:0,
+              hints:["Mark = تعليم/تظليل.","خلفية صفراء."], explanation:"‏<mark> يظلّل النص بخلفية صفراء." },
+            { type:"missing", diff:2, xp:70, context:"السعر القديم لازم يتشطب 🏷️", prompt:"اكتب اسم الوسم الناقص باش يتشطب السعر القديم:",
+              template:"السعر: <___>100</___> 60 دينار", answer:"del",
+              hints:["Del = محذوف (يرسم خط فوق النص).","3 حروف: del."], explanation:"‏<del> يشطب النص: <del>100</del>" },
+            { type:"mcq", diff:2, xp:70, context:"في إعلان تقني: 10⁶ ميجابت.", prompt:"الوسم &lt;sup&gt; يسوّي شن؟",
+              opts:["يرفع النص فوقي (أُس)","يخفض النص تحتي","يظلّل النص","يشطب النص"], answer:0,
+              hints:["Sup = Superscript (فوقي).","زي الأُس في الرياضيات."], explanation:"‏<sup> يرفع النص لأعلى (فوقي)، و<sub> يخفضه (تحتي)." },
+            { type:"write", diff:3, xp:120, boss:true, context:"🏆 ابنِ إعلان اللوحة!",
+              prompt:"اكتب فقرة فيها كلمة <mark>مظلّلة</mark> وكلمة <strong>غامقة</strong>.",
+              starter:'<p>عرض <mark>...</mark> بسعر <strong>...</strong></p>', target:'<p>عرض <mark>خاص</mark> بسعر <strong>مميّز</strong></p>',
+              requires:["<mark>","</mark>","<strong>","</strong>"], hints:["لازم <mark>…</mark> و <strong>…</strong>.","مثال: <mark>خاص</mark> … <strong>مميّز</strong>"],
+              explanation:"الإعلان الجذّاب = تظليل <mark> + غامق <strong>." }
+          ],
+          reward:{ xp:300, coins:50, badge:"Format Wizard", badgeIcon:"✨" },
+          reveal:"📖 المرحلة الأولى اكتملت — أساسيات النص رجعت للمدينة والمباني اضاءت! لكن الصور مازالت مفقودة… يُفتح الحي التالي."
         }
       ]
     },
-    { id:"images", name:"حي الصور والروابط", icon:"🖼️", color:"#ff4bd8", desc:"مقفول — أكمل حي العناوين لتفتحه.", locked:true, missions:[] },
-    { id:"css", name:"حي الألوان (CSS)", icon:"🎨", color:"#8b5cff", desc:"مقفول — الألوان اختفت من المدينة!", locked:true, missions:[] }
+    { id:"images", name:"المرحلة ٢: الصور والروابط", icon:"🖼️", color:"#ff4bd8", desc:"مقفولة — أكمل المرحلة الأولى لتفتحها.", locked:true, missions:[] },
+    { id:"css", name:"المرحلة ٣: الألوان (CSS)", icon:"🎨", color:"#8b5cff", desc:"مقفولة — الألوان اختفت من المدينة!", locked:true, missions:[] }
   ]
 };
 
@@ -330,6 +371,7 @@ function drawCity(){ const c=$("#cityCanvas"); if(!c) return; const x=c.getConte
 }
 
 /* ===== خريطة الأحياء ===== */
+function firstIncomplete(z){ const i=z.missions.findIndex(m=>!S.missionsDone[m.id]); return i<0?0:i; }
 function buildMap(){ drawCity(); const g=$("#zonesGrid"); g.innerHTML="";
   WEBCRAFT.zones.forEach((z,zi)=>{ const unlocked=S.zonesUnlocked.includes(z.id) && !z.locked || (zi===0);
     const total=z.missions.length; const done=z.missions.filter(m=>S.missionsDone[m.id]).length; const allDone=total>0&&done>=total;
@@ -337,7 +379,7 @@ function buildMap(){ drawCity(); const g=$("#zonesGrid"); g.innerHTML="";
     const card=document.createElement("div"); card.className="zone"+(locked?" locked":"")+(allDone?" done":"");
     card.innerHTML=`<div class="zbadge">${locked?'🔒':(allDone?'✅':'')}</div><div class="zico">${z.icon}</div><h3>${z.name}</h3>
       <div class="zd">${z.desc}</div>${total?`<div class="zprog"><i style="width:${total?Math.round(done/total*100):0}%"></i></div>`:''}`;
-    if(!locked && total){ card.onclick=()=>{ sClick(); startMission(zi,0); }; }
+    if(!locked && total){ card.onclick=()=>{ sClick(); startMission(zi, firstIncomplete(z)); }; }
     else card.onclick=()=>toast("🔒 أكمل الحي السابق باش تفتحه!");
     g.appendChild(card); });
 }
@@ -468,7 +510,7 @@ function completeMission(m){ S.missionsDone[m.id]=true; const z=WEBCRAFT.zones[f
   addXP(m.reward.xp); S.coins+=m.reward.coins; if(!S.badges.includes(m.reward.badge)) S.badges.push(m.reward.badge);
   save(); updateHUD(); cinematic(m, unlockedZone);
 }
-function cinematic(m, unlockedZone){ sWin(); const c=$("#cine"); const card=$("#cineCard");
+function cinematic(m, unlockedZone, nextMi){ sWin(); const c=$("#cine"); const card=$("#cineCard");
   card.innerHTML=`<div class="mc">✦ MISSION COMPLETE ✦</div><h2>${m.title}</h2>
     <p style="color:var(--muted); font-size:15px; line-height:1.8">أعدت تشغيل جزء من المدينة! 🌆 المبنى اضاء من جديد.</p>
     <div class="badge-pop">${m.reward.badgeIcon||"🏆"}</div>
@@ -476,10 +518,12 @@ function cinematic(m, unlockedZone){ sWin(); const c=$("#cine"); const card=$("#
     <div class="storybar" style="text-align:right">${m.reveal}</div>
     ${unlockedZone?`<div class="pill" style="display:block; margin:10px 0; border-color:var(--cyan); color:var(--cyan)">🔓 فتحت حي جديد: ${unlockedZone.name}</div>`:""}
     <div style="margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-      <button class="btn" id="cineMap">🗺️ ارجع للخريطة</button>
+      ${nextMi>=0?`<button class="btn" id="cineNext">المهمة التالية ▶</button>`:""}
+      <button class="btn ${nextMi>=0?'ghost sm':''}" id="cineMap">🗺️ الخريطة</button>
     </div>`;
   c.classList.add("show");
   $("#cineMap").onclick=()=>{ sClick(); c.classList.remove("show"); buildMap(); show("scMap"); if(unlockedZone) sUnlock(); };
+  if(nextMi>=0){ const nb=$("#cineNext"); if(nb) nb.onclick=()=>{ sClick(); c.classList.remove("show"); startMission(flow.zi, nextMi); }; }
 }
 
 /* ===== أدوات ===== */
