@@ -328,14 +328,14 @@ const WEBCRAFT = {
 /* ===== الحالة + الحفظ ===== */
 const KEY="webcraft_v1";
 let S={ name:"", xp:0, coins:0, level:1, combo:0, bestCombo:0, badges:[], streak:0,
-        missionsDone:{}, zonesUnlocked:["headings"], curZone:0, curMission:0, curCh:0,
+        missionsDone:{}, zonesUnlocked:["basics-text"], curZone:0, curMission:0, curCh:0,
         attempts:0, hintsUsed:0 };
 function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
 function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)); if(d) S=Object.assign(S,d);}catch(e){} }
 const XP_PER_LEVEL=300;
 const $=s=>document.querySelector(s);
 const scr=["scOnboard","scMap","scPlay"];
-function show(id){ scr.forEach(x=>$("#"+x).classList.toggle("active",x===id)); $("#hud").style.display=(id==="scOnboard")?"none":"block"; window.scrollTo({top:0,behavior:"smooth"}); }
+function show(id){ scr.forEach(x=>$("#"+x).classList.toggle("active",x===id)); $("#hud").style.display=(id==="scOnboard")?"none":"block"; window.scrollTo({top:0,behavior:"smooth"}); if(id==="scMap"&&typeof drawCity==="function") requestAnimationFrame(drawCity); }
 
 /* ===== sound ===== */
 let sndOn=true, actx=null;
@@ -375,7 +375,7 @@ function firstIncomplete(z){ const i=z.missions.findIndex(m=>!S.missionsDone[m.i
 function buildMap(){ drawCity(); const g=$("#zonesGrid"); g.innerHTML="";
   WEBCRAFT.zones.forEach((z,zi)=>{ const unlocked=S.zonesUnlocked.includes(z.id) && !z.locked || (zi===0);
     const total=z.missions.length; const done=z.missions.filter(m=>S.missionsDone[m.id]).length; const allDone=total>0&&done>=total;
-    const locked = z.locked || !S.zonesUnlocked.includes(z.id);
+    const locked = zi>0 && (z.locked || !S.zonesUnlocked.includes(z.id));
     const card=document.createElement("div"); card.className="zone"+(locked?" locked":"")+(allDone?" done":"");
     card.innerHTML=`<div class="zbadge">${locked?'🔒':(allDone?'✅':'')}</div><div class="zico">${z.icon}</div><h3>${z.name}</h3>
       <div class="zd">${z.desc}</div>${total?`<div class="zprog"><i style="width:${total?Math.round(done/total*100):0}%"></i></div>`:''}`;
@@ -537,7 +537,7 @@ function refreshStart(){ const has=S.name||S.xp>0||Object.keys(S.missionsDone).l
   if(has){ $("#resumeNote").style.display="block"; $("#resumeNote").innerHTML=`👋 أهلاً برجوعك <b>${S.name||"Architect"}</b> · ⚡${S.xp} XP · مستوى ${S.level}`; $("#enterBtn").textContent="▶ أكمل"; }
   else { $("#resumeNote").style.display="none"; $("#enterBtn").textContent="🚀 ادخل المدينة"; } }
 $("#enterBtn").onclick=()=>{ sClick(); const nm=$("#nameInput").value.trim(); if(nm)S.name=nm; if(!S.name){ toast("✍️ اكتب اسمك الأول"); $("#nameInput").focus(); return; } save(); updateHUD(); buildMap(); show("scMap"); };
-$("#resetBtn").onclick=()=>{ if(confirm("تبدأ من جديد؟ راح ينمسح كل تقدّمك.")){ localStorage.removeItem(KEY); S={ name:"",xp:0,coins:0,level:1,combo:0,bestCombo:0,badges:[],streak:0,missionsDone:{},zonesUnlocked:["headings"],curZone:0,curMission:0,curCh:0,attempts:0,hintsUsed:0 }; WEBCRAFT.zones.forEach((z,i)=>{ if(i>0)z.locked=true; }); $("#nameInput").value=""; refreshStart(); updateHUD(); toast("🔄 بداية جديدة"); } };
+$("#resetBtn").onclick=()=>{ if(confirm("تبدأ من جديد؟ راح ينمسح كل تقدّمك.")){ localStorage.removeItem(KEY); S={ name:"",xp:0,coins:0,level:1,combo:0,bestCombo:0,badges:[],streak:0,missionsDone:{},zonesUnlocked:["basics-text"],curZone:0,curMission:0,curCh:0,attempts:0,hintsUsed:0 }; WEBCRAFT.zones.forEach((z,i)=>{ if(i>0)z.locked=true; }); $("#nameInput").value=""; refreshStart(); updateHUD(); toast("🔄 بداية جديدة"); } };
 $("#mapBtn").onclick=()=>{ sClick(); stopTimer(); buildMap(); show("scMap"); };
 $("#sndBtn").onclick=()=>{ sndOn=!sndOn; $("#sndBtn").textContent=sndOn?"🔊":"🔇"; if(sndOn)sClick(); };
 $("#nameInput").addEventListener("keydown",e=>{ if(e.key==="Enter")$("#enterBtn").click(); });
@@ -545,7 +545,7 @@ addEventListener("resize",()=>{ if($("#scMap").classList.contains("active")) dra
 if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) document.body.classList.add("reduce-motion");
 
 /* إقلاع */
-load(); WEBCRAFT.zones.forEach(z=>{ if(S.zonesUnlocked.includes(z.id)) z.locked=false; }); refreshStart(); updateHUD();
+load(); if(!Array.isArray(S.zonesUnlocked)||!S.zonesUnlocked.length) S.zonesUnlocked=["basics-text"]; if(!S.zonesUnlocked.includes(WEBCRAFT.zones[0].id)) S.zonesUnlocked.push(WEBCRAFT.zones[0].id); WEBCRAFT.zones.forEach(z=>{ if(S.zonesUnlocked.includes(z.id)) z.locked=false; }); WEBCRAFT.zones[0].locked=false; save(); refreshStart(); updateHUD();
 </script>
 </body>
 </html>
