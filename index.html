@@ -151,6 +151,7 @@ h1.title .neon{background:linear-gradient(90deg,var(--cyan),var(--magenta)); -we
 .xpfloat{position:fixed; z-index:65; font-weight:900; color:var(--cyan); pointer-events:none; animation:up 1s ease forwards; font-size:20px;}
 @keyframes up{0%{opacity:0; transform:translateY(0)}20%{opacity:1}100%{opacity:0; transform:translateY(-70px)}}
 
+.foot-credit{position:fixed; bottom:8px; left:0; right:0; text-align:center; font-size:12px; color:var(--muted); opacity:.75; z-index:6; pointer-events:none; font-weight:800; letter-spacing:.3px;}
 @media(max-width:560px){ h1.title{font-size:28px;} .pv-wrap{grid-template-columns:1fr;} .pv iframe{height:130px;} }
 </style>
 </head>
@@ -209,6 +210,7 @@ h1.title .neon{background:linear-gradient(90deg,var(--cyan),var(--magenta)); -we
 
 <!-- CINEMATIC -->
 <div id="cine"><div class="cine-card" id="cineCard"></div></div>
+<div class="foot-credit">⚡ برمجة وتصميم — م. سلوان ابوعجيلة</div>
 
 <script>
 /* ============================================================
@@ -387,12 +389,12 @@ function buildMap(){ drawCity(); const g=$("#zonesGrid"); g.innerHTML="";
 /* ===== تدفّق المهمة ===== */
 let flow=null; // {zi, mi, phase, ci, attempts, hintsUsed, timeLeft}
 function startMission(zi,mi){ const m=WEBCRAFT.zones[zi].missions[mi];
-  flow={ zi, mi, ci:0, phase:"brief" }; S.curZone=zi; S.curMission=mi; save(); show("scPlay"); renderPhase(); }
+  flow={ zi, mi, ci:0, phase:"brief", wrong:{}, review:false }; S.curZone=zi; S.curMission=mi; save(); show("scPlay"); renderPhase(); }
 
 function renderPhase(){ const m=WEBCRAFT.zones[flow.zi].missions[flow.mi];
   if(flow.phase==="brief") return renderBrief(m);
   if(flow.phase==="learn") return renderLearn(m);
-  if(flow.phase==="challenge") return renderChallenge(m, m.challenges[flow.ci]);
+  if(flow.phase==="challenge"){ const ci=flow.review?flow.reviewList[flow.ri]:flow.ci; return renderChallenge(m, m.challenges[ci]); }
 }
 function renderBrief(m){ $("#playCard").innerHTML=`
   <div class="chhead"><span class="chtag">MISSION</span><button class="btn ghost sm" id="toMap">🗺️ الخريطة</button></div>
@@ -418,10 +420,10 @@ function renderLearn(m){ const L=m.learn; $("#playCard").innerHTML=`
 let ch=null; // {tries, hints, solved, timerId, timeLeft}
 function renderChallenge(m, c){
   ch={ tries:0, hints:0, solved:false, timerId:null, timeLeft:c.timeLimit||0 };
-  const idx=flow.ci+1, total=m.challenges.length;
+  const total=m.challenges.length; const idx=flow.review?(flow.ri+1):(flow.ci+1); const dispTotal=flow.review?flow.reviewList.length:total; const revTag=flow.review?" 🔁":"";
   const timer = c.timeLimit? `<span class="timer" id="chTimer">⏱️ ${c.timeLimit}s</span>`:"";
   let body="";
-  if(c.type==="mcq") body=`<div class="opts" id="opts">${c.opts.map((o,i)=>`<div class="opt" data-i="${i}"><span class="k">${["A","B","C","D"][i]}</span><span>${o}</span></div>`).join("")}</div>`;
+  if(c.type==="mcq"){ const order=shuffle(c.opts.map((o,i)=>({o,i}))); body=`<div class="opts" id="opts">${order.map((it,pos)=>`<div class="opt" data-i="${it.i}"><span class="k">${["A","B","C","D"][pos]}</span><span>${it.o}</span></div>`).join("")}</div>`; }
   else if(c.type==="missing") body=`<div class="code">${esc(c.template)}</div><div style="text-align:center;margin-top:8px;"><input class="inline" id="inp" placeholder="؟" autocomplete="off" spellcheck="false"></div>`;
   else if(c.type==="repair") body=`<div style="font-size:12px;color:var(--muted);font-weight:800">الكود المكسور — عدّله:</div><textarea class="editor" id="inp" spellcheck="false" style="min-height:70px;">${esc(c.buggy)}</textarea>`;
   else if(c.type==="order") body=`<div class="orderbox" id="ord"></div>`;
@@ -429,7 +431,7 @@ function renderChallenge(m, c){
      <div class="pv-wrap"><div class="pv"><div class="pv-t">🎯 الهدف المطلوب</div><iframe id="pvTarget"></iframe></div>
      <div class="pv"><div class="pv-t">🖥️ ناتجك المباشر</div><iframe id="pvOut"></iframe></div></div>`;
   $("#playCard").innerHTML=`
-    <div class="chhead"><span class="chtag">${chTypeLabel(c)}</span><span class="chcount">${idx}/${total} ${timer}</span></div>
+    <div class="chhead"><span class="chtag">${chTypeLabel(c)}</span><span class="chcount">${idx}/${dispTotal}${revTag} ${timer}</span></div>
     <div class="context">${c.context}</div>
     <div class="prompt">${c.prompt}</div>
     ${body}
@@ -481,7 +483,7 @@ function onCorrect(m,c){ ch.solved=true; stopTimer(); sOk();
   $("#checkBtn").textContent="التالي ▶"; $("#checkBtn").className="btn sm"; $("#checkBtn").onclick=()=>{ sClick(); nextChallenge(m); };
   $("#hintBtn").style.display="none";
 }
-function onWrong(c, timeout){ ch.tries++; S.combo=Math.max(0,S.combo-1); save(); updateHUD(); sBad();
+function onWrong(c, timeout){ ch.tries++; if(flow&&!flow.review) flow.wrong[flow.ci]=true; S.combo=Math.max(0,S.combo-1); save(); updateHUD(); sBad();
   const fb=$("#fb"); fb.className="feedback bad show";
   let msg = timeout? "⏰ خلص الوقت! جرّب مرة ثانية بهدوء." : (ch.tries===1? "مش هكي 👀 ركّز شوية…" : "قريب! خذ تلميح 👇");
   fb.innerHTML=`<div class="fi">${timeout?"⏰":"🤔"}</div><div class="ft">${msg}</div>`;
@@ -499,7 +501,23 @@ function autoHint(c){ if(!c.hints)return; if(ch.hints>=c.hints.length) return sh
   const fb=$("#fb"); fb.className="feedback hint show"; fb.innerHTML=`<div class="fi">💡</div><div class="ft">تلميح ${ch.hints}: ${h}</div>`; }
 function showSolution(c){ const fb=$("#fb"); fb.className="feedback hint show"; fb.innerHTML=`<div class="fi">🧠</div><div class="ft"><b>الحل:</b><br><span style="color:var(--muted); white-space:pre-wrap">${esc(c.explanation||c.solution||c.answer||"")}</span></div>`; }
 
-function nextChallenge(m){ flow.ci++; if(flow.ci<m.challenges.length){ renderPhase(); } else { completeMission(m); } }
+function nextChallenge(m){
+  if(!flow.review){ flow.ci++;
+    if(flow.ci<m.challenges.length){ renderPhase(); return; }
+    const wrong=Object.keys(flow.wrong||{}).map(Number).sort((a,b)=>a-b);
+    if(wrong.length){ flow.review=true; flow.reviewList=wrong; flow.ri=0; showReviewIntro(m); return; }
+    completeMission(m);
+  } else { flow.ri++;
+    if(flow.ri<flow.reviewList.length){ renderPhase(); return; }
+    completeMission(m);
+  }
+}
+function showReviewIntro(m){ $("#playCard").innerHTML=`
+  <div class="chhead"><span class="chtag">REVIEW · مراجعة</span></div>
+  <div class="storybar">🔁 قبل ما تكمّل المهمة، راح تعيد حل التحديات اللي غلطت فيها بس (${flow.reviewList.length}) — عشان تتقنها تماماً!</div>
+  <div style="text-align:center; margin-top:16px;"><button class="btn" id="rgo">ابدأ المراجعة ▶</button></div>`;
+  $("#rgo").onclick=()=>{ sClick(); renderPhase(); };
+}
 
 /* ===== إتمام المهمة ===== */
 function completeMission(m){ S.missionsDone[m.id]=true; const z=WEBCRAFT.zones[flow.zi];
