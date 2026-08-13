@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WEBCRAFT — مدينة الويب المفقودة</title>
+<style>
+:root{
+  --bg0:#0a0e1f; --bg1:#141a35; --ink:#eaf2ff; --muted:#9fb0d6;
+  --cyan:#22e0ff; --magenta:#ff4bd8; --violet:#8b5cff; --lime:#8dff6b; --gold:#ffd166;
+  --ok:#3ee08a; --bad:#ff6b8a; --glass:rgba(255,255,255,.07); --glass-brd:rgba(255,255,255,.14);
+  --r:18px;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{font-family:"Tahoma","Segoe UI",system-ui,sans-serif; color:var(--ink); min-height:100vh; overflow-x:hidden;
+  background:radial-gradient(1200px 800px at 80% -10%, #24225e 0%, transparent 55%),
+             radial-gradient(1000px 700px at 10% 10%, #103a4d 0%, transparent 55%),
+             linear-gradient(180deg,#0a0e1f,#0a0e1f 40%,#080a17);}
+#grid{position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;}
+.wrap{position:relative; z-index:2; max-width:940px; margin:0 auto; padding:14px 14px 60px;}
+.reduce-motion *{animation:none!important; transition:none!important;}
+
+/* ===== HUD ===== */
+#hud{position:sticky; top:0; z-index:30; display:none; margin-bottom:16px;}
+.hud-in{background:var(--glass); backdrop-filter:blur(14px); border:1px solid var(--glass-brd); border-radius:20px;
+  padding:10px 14px; box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.hud-row{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+.hud-left{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+.stat{display:flex; align-items:center; gap:6px; font-weight:800; font-size:14px;}
+.stat .v{color:var(--gold); font-size:17px; min-width:16px;}
+.stat.xp .v{color:var(--cyan);} .stat.coin .v{color:var(--gold);} .stat.lvl .v{color:var(--magenta);}
+.icobtn{width:38px; height:38px; border-radius:12px; border:1px solid var(--glass-brd); background:rgba(255,255,255,.05);
+  color:#fff; font-size:17px; cursor:pointer; transition:.18s;}
+.icobtn:hover{border-color:var(--cyan); box-shadow:0 0 14px rgba(34,224,255,.35);}
+.xpbar{height:8px; background:rgba(255,255,255,.10); border-radius:99px; margin-top:9px; overflow:hidden;}
+.xpbar>i{display:block; height:100%; width:0%; border-radius:99px; background:linear-gradient(90deg,var(--cyan),var(--violet)); transition:width .6s cubic-bezier(.2,.9,.2,1);}
+.combo{display:none; align-items:center; gap:6px; font-weight:900; color:var(--gold); animation:pulse .5s ease infinite alternate;}
+.combo.show{display:flex;}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.14)}}
+
+/* ===== screens ===== */
+.screen{display:none; animation:fade .5s cubic-bezier(.2,.9,.2,1) both;}
+.screen.active{display:block;}
+@keyframes fade{from{opacity:0; transform:translateY(20px)}to{opacity:1; transform:none}}
+.card{background:var(--glass); backdrop-filter:blur(14px); border:1px solid var(--glass-brd); border-radius:24px;
+  padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.45);}
+.center{text-align:center;}
+.kicker{display:inline-block; font-weight:900; font-size:13px; letter-spacing:2px; color:var(--cyan);
+  background:rgba(34,224,255,.10); border:1px solid rgba(34,224,255,.3); padding:5px 14px; border-radius:99px;}
+h1.title{font-size:38px; font-weight:900; line-height:1.25; margin:16px 0 8px; letter-spacing:.5px;}
+h1.title .neon{background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 0 30px rgba(139,92,255,.4);}
+.lead{color:var(--muted); font-size:17px; line-height:1.9; max-width:600px; margin:8px auto;}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; border:none; cursor:pointer; font-family:inherit;
+  font-weight:900; font-size:17px; padding:15px 30px; border-radius:16px; color:#04121e;
+  background:linear-gradient(180deg,var(--cyan),#0bb8d6); box-shadow:0 10px 30px rgba(34,224,255,.35); transition:.14s;}
+.btn:hover{filter:brightness(1.06); transform:translateY(-1px);} .btn:active{transform:translateY(2px);}
+.btn:disabled{opacity:.45; cursor:not-allowed;}
+.btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--glass-brd); box-shadow:none; font-size:15px; padding:12px 22px;}
+.btn.ghost:hover{border-color:var(--cyan);}
+.btn.mag{background:linear-gradient(180deg,var(--magenta),#c92bb0); color:#fff; box-shadow:0 10px 30px rgba(255,75,216,.35);}
+.btn.sm{font-size:14px; padding:11px 20px;}
+.namebox{max-width:420px; margin:22px auto 0;}
+.field{width:100%; padding:14px 16px; border-radius:14px; border:1px solid var(--glass-brd); background:rgba(0,0,0,.3);
+  color:#fff; font-size:16px; font-family:inherit; font-weight:700; text-align:center;}
+.field:focus{outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(34,224,255,.15);}
+
+/* ===== World Map ===== */
+.map-head{text-align:center; margin-bottom:18px;}
+.map-head h2{font-size:26px; font-weight:900;}
+.map-head p{color:var(--muted); margin-top:6px;}
+.cityframe{position:relative; border-radius:24px; overflow:hidden; border:1px solid var(--glass-brd);
+  background:linear-gradient(180deg,#0c1330,#0a1024); box-shadow:inset 0 0 60px rgba(0,0,0,.5); margin-bottom:18px;}
+.zones{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px;}
+.zone{position:relative; border-radius:20px; padding:20px; cursor:pointer; overflow:hidden; transition:.2s;
+  border:1px solid var(--glass-brd); background:var(--glass); backdrop-filter:blur(10px); text-align:center;}
+.zone:hover{transform:translateY(-5px); border-color:var(--cyan); box-shadow:0 16px 40px rgba(34,224,255,.2);}
+.zone.locked{opacity:.5; filter:grayscale(.6); cursor:not-allowed;}
+.zone.locked:hover{transform:none; border-color:var(--glass-brd); box-shadow:none;}
+.zone.done{border-color:var(--ok);}
+.zone .zico{font-size:44px;}
+.zone h3{font-size:19px; font-weight:900; margin:8px 0 4px;}
+.zone .zd{font-size:13px; color:var(--muted); line-height:1.6; min-height:34px;}
+.zbadge{position:absolute; top:12px; inset-inline-end:14px; font-size:18px;}
+.zprog{margin-top:10px; height:6px; background:rgba(255,255,255,.1); border-radius:99px; overflow:hidden;}
+.zprog>i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--cyan),var(--lime)); border-radius:99px; transition:width .6s;}
+
+/* ===== Mission / story ===== */
+.panel{max-width:680px; margin:0 auto;}
+.storybar{border-inline-start:4px solid var(--magenta); background:rgba(255,75,216,.08); padding:14px 18px; border-radius:12px;
+  font-size:18px; line-height:1.9; font-weight:700; margin:14px 0;}
+.alert{border-inline-start-color:var(--gold); background:rgba(255,209,102,.10);}
+.learn-list{list-style:none; display:grid; gap:10px; margin:14px 0;}
+.learn-list li{background:rgba(255,255,255,.04); border:1px solid var(--glass-brd); border-radius:12px; padding:12px 14px; font-size:15px; line-height:1.8;}
+.learn-list b{color:var(--cyan);}
+.code{direction:ltr; text-align:left; font-family:"Consolas","Courier New",monospace; background:#070b1a; border:1px solid var(--glass-brd);
+  border-radius:12px; padding:14px 16px; font-size:15px; color:#a8ffe0; margin:10px 0; white-space:pre-wrap; line-height:1.7; overflow-x:auto;}
+.code .tag{color:#ff8ad6;} .code .txt{color:#eaf2ff;} .code .cm{color:#6b7ba6;}
+
+/* challenge shell */
+.chhead{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:4px;}
+.chtag{font-size:12px; font-weight:900; letter-spacing:1px; color:var(--violet); background:rgba(139,92,255,.12); border:1px solid rgba(139,92,255,.3); padding:4px 12px; border-radius:99px;}
+.chcount{font-size:12px; color:var(--muted); font-weight:800;}
+.timer{font-size:13px; font-weight:900; color:var(--gold);} .timer.low{color:var(--bad); animation:pulse .4s infinite alternate;}
+.context{font-size:17px; font-weight:800; line-height:1.85; margin:12px 0 6px;}
+.prompt{font-size:16px; color:var(--muted); margin-bottom:10px;}
+.opts{display:grid; gap:12px;}
+.opt{display:flex; align-items:center; gap:12px; text-align:start; padding:15px 18px; border-radius:14px; cursor:pointer; font-size:16px; font-weight:700;
+  background:rgba(255,255,255,.04); border:1px solid var(--glass-brd); color:var(--ink); transition:.14s;}
+.opt:hover{border-color:var(--cyan); background:rgba(34,224,255,.06);}
+.opt .k{width:28px; height:28px; flex:none; border-radius:8px; background:rgba(139,92,255,.2); display:grid; place-items:center; font-weight:900; font-size:13px; color:var(--violet); direction:ltr;}
+.opt.correct{border-color:var(--ok); background:rgba(62,224,138,.14);} .opt.wrong{border-color:var(--bad); background:rgba(255,107,138,.12);}
+.opt.dis{pointer-events:none; opacity:.8;}
+.editor{direction:ltr; width:100%; min-height:120px; font-family:"Consolas",monospace; font-size:15px; line-height:1.6;
+  background:#070b1a; color:#a8ffe0; border:1px solid var(--glass-brd); border-radius:12px; padding:12px 14px; resize:vertical;}
+.editor:focus{outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(34,224,255,.12);}
+.inline{direction:ltr; font-family:"Consolas",monospace; font-size:16px; background:#070b1a; color:#a8ffe0; border:1px solid var(--glass-brd);
+  border-radius:10px; padding:10px 12px; width:180px; text-align:center;}
+.pv-wrap{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+.pv{border:1px solid var(--glass-brd); border-radius:12px; overflow:hidden; background:#fff;}
+.pv .pv-t{font-size:12px; font-weight:900; padding:6px 10px; background:rgba(0,0,0,.4); color:var(--muted); direction:rtl;}
+.pv iframe{width:100%; height:150px; border:0; background:#fff; display:block;}
+.orderbox{display:grid; gap:8px; margin-top:10px;}
+.ordline{display:flex; align-items:center; gap:10px; background:#070b1a; border:1px solid var(--glass-brd); border-radius:10px; padding:8px 10px;}
+.ordline .txt{flex:1; direction:ltr; font-family:"Consolas",monospace; color:#a8ffe0; font-size:15px;}
+.ordbtns{display:flex; gap:4px;} .ordbtns button{width:32px; height:32px; border-radius:8px; border:1px solid var(--glass-brd); background:rgba(255,255,255,.05); color:#fff; cursor:pointer;}
+.ordbtns button:hover{border-color:var(--cyan);}
+
+.feedback{margin-top:14px; border-radius:14px; padding:14px 16px; display:none; align-items:flex-start; gap:12px; animation:fade .3s;}
+.feedback.show{display:flex;} .feedback.good{background:rgba(62,224,138,.12); border:1px solid var(--ok);} .feedback.bad{background:rgba(255,107,138,.10); border:1px solid var(--bad);} .feedback.hint{background:rgba(255,209,102,.10); border:1px solid var(--gold);}
+.feedback .fi{font-size:24px;} .feedback .ft{font-size:15px; line-height:1.8; font-weight:700;}
+.controls{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:16px; flex-wrap:wrap;}
+.check{background:linear-gradient(180deg,var(--lime),#4ecb45); color:#04210a; box-shadow:0 8px 22px rgba(141,255,107,.3);}
+
+/* ===== cinematic reward ===== */
+#cine{position:fixed; inset:0; z-index:60; display:none; place-items:center; padding:20px;
+  background:radial-gradient(600px 400px at 50% 40%, rgba(139,92,255,.35), rgba(6,10,25,.96));}
+#cine.show{display:grid;}
+.cine-card{max-width:460px; width:100%; text-align:center; background:var(--glass); backdrop-filter:blur(16px);
+  border:1px solid var(--glass-brd); border-radius:24px; padding:30px 24px; box-shadow:0 24px 70px rgba(0,0,0,.6); animation:pop .5s cubic-bezier(.2,1.4,.4,1);}
+@keyframes pop{from{transform:scale(.85); opacity:0}to{transform:scale(1); opacity:1}}
+.cine-card .mc{font-size:15px; font-weight:900; letter-spacing:3px; color:var(--cyan);}
+.cine-card h2{font-size:30px; font-weight:900; margin:8px 0;}
+.reward-row{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:16px 0;}
+.pill{background:rgba(255,255,255,.06); border:1px solid var(--glass-brd); border-radius:12px; padding:8px 14px; font-weight:900; font-size:15px;}
+.badge-pop{font-size:54px; margin:6px 0; animation:pop .6s .2s both;}
+
+#toast{position:fixed; top:16px; left:50%; transform:translateX(-50%) translateY(-140px); z-index:70; background:rgba(10,14,31,.95);
+  border:1px solid var(--cyan); color:#fff; padding:11px 20px; border-radius:14px; font-weight:800; transition:transform .4s cubic-bezier(.2,1.4,.4,1); box-shadow:0 0 30px rgba(34,224,255,.3);}
+#toast.show{transform:translateX(-50%) translateY(0);}
+.xpfloat{position:fixed; z-index:65; font-weight:900; color:var(--cyan); pointer-events:none; animation:up 1s ease forwards; font-size:20px;}
+@keyframes up{0%{opacity:0; transform:translateY(0)}20%{opacity:1}100%{opacity:0; transform:translateY(-70px)}}
+
+@media(max-width:560px){ h1.title{font-size:28px;} .pv-wrap{grid-template-columns:1fr;} .pv iframe{height:130px;} }
+</style>
+</head>
+<body>
+<canvas id="grid"></canvas>
+<div id="toast"></div>
+
+<div class="wrap">
+  <!-- HUD -->
+  <div id="hud"><div class="hud-in">
+    <div class="hud-row">
+      <div class="hud-left">
+        <span class="stat lvl">🏅 <span class="v" id="hLvl">1</span></span>
+        <span class="stat xp">⚡ <span class="v" id="hXp">0</span></span>
+        <span class="stat coin">🪙 <span class="v" id="hCoin">0</span></span>
+        <span class="combo" id="hCombo">🔥 <span id="hComboN">x2</span></span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span style="font-weight:900; font-size:13px; color:var(--muted)" id="hName">Architect</span>
+        <button class="icobtn" id="mapBtn" title="الخريطة">🗺️</button>
+        <button class="icobtn" id="sndBtn" title="الصوت">🔊</button>
+      </div>
+    </div>
+    <div class="xpbar"><i id="hXpBar"></i></div>
+  </div></div>
+
+  <!-- ONBOARDING -->
+  <section class="screen active" id="scOnboard">
+    <div class="card center">
+      <span class="kicker">WEBCRAFT · v0.1</span>
+      <h1 class="title">مدينة <span class="neon">الويب المفقودة</span></h1>
+      <p class="lead">مدينة رقمية مستقبلية انهار نظامها فجأة… اختفت العناوين، تكسّرت الصفحات، وانطفأت الأنوار.
+        <br>أنت الآن <b style="color:var(--cyan)">Web Architect</b> — مهمّتك إعادة بناء المدينة بـ <b>HTML</b> و<b>CSS</b>.</p>
+      <div class="namebox">
+        <input id="nameInput" class="field" maxlength="18" placeholder="اكتب اسم المهندس…" autocomplete="off">
+        <p style="font-size:12px; color:var(--muted); margin-top:8px;">تقدّمك بيتحفظ تلقائياً 💾</p>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn" id="enterBtn">🚀 ادخل المدينة</button>
+        <button class="btn ghost sm" id="resetBtn" style="display:none;">🔄 من جديد</button>
+      </div>
+      <div id="resumeNote" style="margin-top:14px; font-size:13px; color:var(--muted); display:none;"></div>
+    </div>
+  </section>
+
+  <!-- WORLD MAP -->
+  <section class="screen" id="scMap">
+    <div class="map-head"><h2>🗺️ خريطة WEBCRAFT CITY</h2><p>كل حي = وحدة تعلّم. أعد بناءه لتضيء المدينة.</p></div>
+    <div class="cityframe"><canvas id="cityCanvas" style="width:100%; height:160px; display:block;"></canvas></div>
+    <div class="zones" id="zonesGrid"></div>
+  </section>
+
+  <!-- MISSION FLOW -->
+  <section class="screen" id="scPlay"><div class="card panel" id="playCard"></div></section>
+</div>
+
+<!-- CINEMATIC -->
+<div id="cine"><div class="cine-card" id="cineCard"></div></div>
+
+<script>
+/* ============================================================
+   WEBCRAFT — Vertical Slice
+   المحتوى مفصول عن المحرّك (CMS-ready). عدّلي WEBCRAFT فقط لإضافة دروس.
+   ============================================================ */
+const WEBCRAFT = {
+  title:"مدينة الويب المفقودة",
+  zones:[
+    {
+      id:"headings", name:"حي العناوين والنصوص", icon:"🏛️", color:"#22e0ff",
+      desc:"أول حي انهار — أعِد العناوين والفقرات لتعيد الحياة للمباني.",
+      missions:[
+        {
+          id:"power-shop",
+          title:"إنقاذ متجر الطاقة",
+          brief:"🚨 عنوان «متجر الطاقة» اختفى، والمبنى انطفأ! النظام يحتاجك تعيد بناء ترويسته باستخدام HTML.",
+          learn:{
+            title:"الدرس السريع: العناوين والفقرات",
+            points:[
+              "العنوان الرئيسي نكتبه بالوسم <b>&lt;h1&gt;</b> … <b>&lt;/h1&gt;</b>",
+              "الفقرة (النص العادي) نكتبها بالوسم <b>&lt;p&gt;</b> … <b>&lt;/p&gt;</b>",
+              "كل وسم لازم يتسكّر: يفتح <b>&lt;h1&gt;</b> ويقفل بنفس الاسم <b>&lt;/h1&gt;</b>"
+            ],
+            example:"<h1>متجر الطاقة</h1>\n<p>أفضل بطاريات المدينة</p>"
+          },
+          challenges:[
+            { type:"mcq", diff:1, xp:50,
+              context:"لوحة المتجر فاضية 🔌 لازم نحط العنوان الرئيسي.",
+              prompt:"أي وسم HTML نستخدم للعنوان الرئيسي؟",
+              opts:["&lt;h1&gt;","&lt;p&gt;","&lt;title&gt;","&lt;head&gt;"], answer:0,
+              hints:["العنوان الأكبر والأهم في الصفحة.","يبدأ بحرف h ورقم 1."],
+              explanation:"‏<h1> هو العنوان الرئيسي (الأكبر). <p> للفقرات، و<title> لعنوان تبويب المتصفح."
+            },
+            { type:"missing", diff:1, xp:60,
+              context:"الوسم اللي حوالين اسم المتجر ضايع 🧩",
+              prompt:"اكتب اسم الوسم الناقص (بدون أقواس) باش يصير عنوان رئيسي:",
+              template:"<___>متجر الطاقة</___>", answer:"h1",
+              hints:["نفس وسم العنوان الرئيسي.","حرف واحد ورقم: h1."],
+              explanation:"الناقص هو h1، فيصير: <h1>متجر الطاقة</h1>"
+            },
+            { type:"repair", diff:2, xp:70,
+              context:"في خلل بالكود ⚠️ الوسم يفتح h1 ويقفل h2!",
+              prompt:"صلّح الكود باش يفتح ويقفل بنفس الوسم:",
+              buggy:"<h1>متجر الطاقة</h2>", solution:"<h1>متجر الطاقة</h1>",
+              hints:["الوسم يفتح <h1> فلازم يقفل بنفسه.","غيّر </h2> إلى </h1>."],
+              explanation:"الوسم المفتوح <h1> لازم يُغلق بـ </h1> مش </h2>."
+            },
+            { type:"order", diff:2, xp:70,
+              context:"قطع كود الترويسة اتبعثرت 🧱 رتّبها.",
+              prompt:"رتّب السطور باش تكوّن عنواناً صحيحاً:",
+              lines:["متجر الطاقة","<h1>","</h1>"], correct:[1,0,2],
+              hints:["الوسم المفتوح فوق، ثم النص، ثم الإغلاق.","الترتيب: <h1> ← النص ← </h1>"],
+              explanation:"الترتيب الصحيح:\n<h1>\nمتجر الطاقة\n</h1>"
+            },
+            { type:"write", diff:3, xp:120, boss:true,
+              context:"🏆 المهمة الكبرى: ابنِ ترويسة المتجر كاملة!",
+              prompt:"اكتب HTML فيه: عنوان رئيسي <h1> + فقرة وصف <p>. شوف النتيجة مباشرة وقارنها بالهدف.",
+              starter:"<h1>...</h1>\n<p>...</p>",
+              target:"<h1>متجر الطاقة</h1>\n<p>أفضل بطاريات المدينة</p>",
+              requires:["<h1>[\\s\\S]*?</h1>","<p>[\\s\\S]*?</p>"],
+              hints:["لازم يكون فيه <h1>…</h1> و <p>…</p>.","مثال: <h1>متجر الطاقة</h1> ثم <p>أي وصف</p>"],
+              explanation:"الترويسة = عنوان <h1> + فقرة <p>. أي نص جوّاهم يشتغل."
+            }
+          ],
+          reward:{ xp:250, coins:40, badge:"HTML Explorer", badgeIcon:"🧭" },
+          reveal:"📖 كشفت أول سر: الانهيار بدأ لمّا انطفأت «نواة العناوين» في قلب المدينة… ومازال في المزيد."
+        }
+      ]
+    },
+    { id:"images", name:"حي الصور والروابط", icon:"🖼️", color:"#ff4bd8", desc:"مقفول — أكمل حي العناوين لتفتحه.", locked:true, missions:[] },
+    { id:"css", name:"حي الألوان (CSS)", icon:"🎨", color:"#8b5cff", desc:"مقفول — الألوان اختفت من المدينة!", locked:true, missions:[] }
+  ]
+};
+
+/* ===== الحالة + الحفظ ===== */
+const KEY="webcraft_v1";
+let S={ name:"", xp:0, coins:0, level:1, combo:0, bestCombo:0, badges:[], streak:0,
+        missionsDone:{}, zonesUnlocked:["headings"], curZone:0, curMission:0, curCh:0,
+        attempts:0, hintsUsed:0 };
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)); if(d) S=Object.assign(S,d);}catch(e){} }
+const XP_PER_LEVEL=300;
+const $=s=>document.querySelector(s);
+const scr=["scOnboard","scMap","scPlay"];
+function show(id){ scr.forEach(x=>$("#"+x).classList.toggle("active",x===id)); $("#hud").style.display=(id==="scOnboard")?"none":"block"; window.scrollTo({top:0,behavior:"smooth"}); }
+
+/* ===== sound ===== */
+let sndOn=true, actx=null;
+function beep(f,d,t="sine",v=.12){ if(!sndOn)return; try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(),g=actx.createGain(); o.type=t;o.frequency.value=f;o.connect(g);g.connect(actx.destination); g.gain.setValueAtTime(v,actx.currentTime); g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d); o.start();o.stop(actx.currentTime+d);}catch(e){} }
+const sOk=()=>{beep(600,.08,"triangle",.16);setTimeout(()=>beep(900,.12,"triangle",.15),80);setTimeout(()=>beep(1250,.16,"triangle",.13),190);};
+const sBad=()=>{beep(220,.16,"sawtooth",.12);setTimeout(()=>beep(170,.18,"sawtooth",.1),110);};
+const sClick=()=>beep(440,.04,"square",.07);
+const sWin=()=>[523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>beep(f,.22,"triangle",.16),i*130));
+const sUnlock=()=>{beep(400,.1,"sine",.14);setTimeout(()=>beep(700,.14,"sine",.14),120);setTimeout(()=>beep(1100,.2,"sine",.13),260);};
+
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2200); }
+function xpFloat(x,y,txt){ const e=document.createElement("div"); e.className="xpfloat"; e.textContent=txt; e.style.left=x+"px"; e.style.top=y+"px"; document.body.appendChild(e); setTimeout(()=>e.remove(),1000); }
+
+/* ===== HUD ===== */
+function updateHUD(){
+  $("#hLvl").textContent=S.level; $("#hXp").textContent=S.xp; $("#hCoin").textContent=S.coins; $("#hName").textContent=S.name||"Architect";
+  const inLvl=S.xp%XP_PER_LEVEL; $("#hXpBar").style.width=Math.round((inLvl/XP_PER_LEVEL)*100)+"%";
+  const c=$("#hCombo"); if(S.combo>=2){ c.classList.add("show"); $("#hComboN").textContent="x"+S.combo; } else c.classList.remove("show");
+}
+function addXP(n){ S.xp+=n; const nl=Math.floor(S.xp/XP_PER_LEVEL)+1; if(nl>S.level){ S.level=nl; toast("⬆️ ترقّيت للمستوى "+nl+"!"); sUnlock(); } }
+
+/* ===== الخلفيات (شبكة + مدينة) ===== */
+(function(){ const c=$("#grid"),x=c.getContext("2d"); function rs(){c.width=innerWidth;c.height=innerHeight;} function draw(){ x.clearRect(0,0,c.width,c.height); x.strokeStyle="rgba(120,150,255,.08)"; x.lineWidth=1; const g=46; for(let i=0;i<c.width;i+=g){x.beginPath();x.moveTo(i,0);x.lineTo(i,c.height);x.stroke();} for(let j=0;j<c.height;j+=g){x.beginPath();x.moveTo(0,j);x.lineTo(c.width,j);x.stroke();} } rs(); draw(); addEventListener("resize",()=>{rs();draw();}); })();
+function drawCity(){ const c=$("#cityCanvas"); if(!c) return; const x=c.getContext("2d"); const W=c.width=c.clientWidth*2, H=c.height=160*2; x.scale(1,1);
+  x.clearRect(0,0,W,H); const doneCount=Object.keys(S.missionsDone).length;
+  // buildings
+  const n=8; for(let i=0;i<n;i++){ const bw=W/n, bx=i*bw, bh=H*(0.35+((i*37)%50)/100); const on=(i< (doneCount>0? n : 1)) && (i<2? doneCount>0 : Math.random()<.5+doneCount*0.5);
+    const lit = i<2 ? doneCount>0 : false;
+    x.fillStyle = lit? "rgba(34,224,255,.5)":"rgba(80,100,170,.25)"; x.fillRect(bx+8, H-bh, bw-16, bh);
+    // windows
+    for(let wy=H-bh+16; wy<H-14; wy+=22){ for(let wx=bx+16; wx<bx+bw-18; wx+=18){ x.fillStyle = lit&&Math.random()<.7? "rgba(255,240,180,.9)":"rgba(255,255,255,.08)"; x.fillRect(wx,wy,8,10); } } }
+  x.fillStyle="rgba(255,75,216,.5)"; x.fillRect(0,H-6,W,6);
+}
+
+/* ===== خريطة الأحياء ===== */
+function buildMap(){ drawCity(); const g=$("#zonesGrid"); g.innerHTML="";
+  WEBCRAFT.zones.forEach((z,zi)=>{ const unlocked=S.zonesUnlocked.includes(z.id) && !z.locked || (zi===0);
+    const total=z.missions.length; const done=z.missions.filter(m=>S.missionsDone[m.id]).length; const allDone=total>0&&done>=total;
+    const locked = z.locked || !S.zonesUnlocked.includes(z.id);
+    const card=document.createElement("div"); card.className="zone"+(locked?" locked":"")+(allDone?" done":"");
+    card.innerHTML=`<div class="zbadge">${locked?'🔒':(allDone?'✅':'')}</div><div class="zico">${z.icon}</div><h3>${z.name}</h3>
+      <div class="zd">${z.desc}</div>${total?`<div class="zprog"><i style="width:${total?Math.round(done/total*100):0}%"></i></div>`:''}`;
+    if(!locked && total){ card.onclick=()=>{ sClick(); startMission(zi,0); }; }
+    else card.onclick=()=>toast("🔒 أكمل الحي السابق باش تفتحه!");
+    g.appendChild(card); });
+}
+
+/* ===== تدفّق المهمة ===== */
+let flow=null; // {zi, mi, phase, ci, attempts, hintsUsed, timeLeft}
+function startMission(zi,mi){ const m=WEBCRAFT.zones[zi].missions[mi];
+  flow={ zi, mi, ci:0, phase:"brief" }; S.curZone=zi; S.curMission=mi; save(); show("scPlay"); renderPhase(); }
+
+function renderPhase(){ const m=WEBCRAFT.zones[flow.zi].missions[flow.mi];
+  if(flow.phase==="brief") return renderBrief(m);
+  if(flow.phase==="learn") return renderLearn(m);
+  if(flow.phase==="challenge") return renderChallenge(m, m.challenges[flow.ci]);
+}
+function renderBrief(m){ $("#playCard").innerHTML=`
+  <div class="chhead"><span class="chtag">MISSION</span><button class="btn ghost sm" id="toMap">🗺️ الخريطة</button></div>
+  <h2 style="font-size:24px; font-weight:900; margin:8px 0;">${m.title}</h2>
+  <div class="storybar alert">${m.brief}</div>
+  <div style="text-align:center; margin-top:18px;"><button class="btn" id="go">ابدأ المهمة ▶</button></div>`;
+  $("#toMap").onclick=()=>{ sClick(); buildMap(); show("scMap"); };
+  $("#go").onclick=()=>{ sClick(); flow.phase="learn"; renderPhase(); };
+}
+function renderLearn(m){ const L=m.learn; $("#playCard").innerHTML=`
+  <div class="chhead"><span class="chtag">LEARN · تعلّم سريع</span><span class="chcount">قبل التطبيق</span></div>
+  <h2 style="font-size:21px; font-weight:900; margin:8px 0;">💡 ${L.title}</h2>
+  <ul class="learn-list">${L.points.map(p=>`<li>${p}</li>`).join("")}</ul>
+  <div style="font-size:13px; color:var(--muted); font-weight:800; margin-bottom:4px;">مثال:</div>
+  <div class="code">${esc(L.example)}</div>
+  <div class="pv" style="margin-top:8px;"><div class="pv-t">🔎 هكي يبان في المتصفح</div><iframe id="learnPv"></iframe></div>
+  <div style="text-align:center; margin-top:18px;"><button class="btn mag" id="go">فهمت — يالله نطبّق 🔧</button></div>`;
+  setFrame("learnPv", L.example);
+  $("#go").onclick=()=>{ sClick(); flow.phase="challenge"; flow.ci=0; renderPhase(); };
+}
+
+/* ===== محرّك التحديات ===== */
+let ch=null; // {tries, hints, solved, timerId, timeLeft}
+function renderChallenge(m, c){
+  ch={ tries:0, hints:0, solved:false, timerId:null, timeLeft:c.timeLimit||0 };
+  const idx=flow.ci+1, total=m.challenges.length;
+  const timer = c.timeLimit? `<span class="timer" id="chTimer">⏱️ ${c.timeLimit}s</span>`:"";
+  let body="";
+  if(c.type==="mcq") body=`<div class="opts" id="opts">${c.opts.map((o,i)=>`<div class="opt" data-i="${i}"><span class="k">${["A","B","C","D"][i]}</span><span>${o}</span></div>`).join("")}</div>`;
+  else if(c.type==="missing") body=`<div class="code">${esc(c.template)}</div><div style="text-align:center;margin-top:8px;"><input class="inline" id="inp" placeholder="؟" autocomplete="off" spellcheck="false"></div>`;
+  else if(c.type==="repair") body=`<div style="font-size:12px;color:var(--muted);font-weight:800">الكود المكسور — عدّله:</div><textarea class="editor" id="inp" spellcheck="false" style="min-height:70px;">${esc(c.buggy)}</textarea>`;
+  else if(c.type==="order") body=`<div class="orderbox" id="ord"></div>`;
+  else if(c.type==="write") body=`<textarea class="editor" id="inp" spellcheck="false" placeholder="اكتب الكود هنا…">${esc(c.starter||"")}</textarea>
+     <div class="pv-wrap"><div class="pv"><div class="pv-t">🎯 الهدف المطلوب</div><iframe id="pvTarget"></iframe></div>
+     <div class="pv"><div class="pv-t">🖥️ ناتجك المباشر</div><iframe id="pvOut"></iframe></div></div>`;
+  $("#playCard").innerHTML=`
+    <div class="chhead"><span class="chtag">${chTypeLabel(c)}</span><span class="chcount">${idx}/${total} ${timer}</span></div>
+    <div class="context">${c.context}</div>
+    <div class="prompt">${c.prompt}</div>
+    ${body}
+    <div class="feedback" id="fb"></div>
+    <div class="controls">
+      <button class="btn ghost sm" id="hintBtn">💡 تلميح</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn ghost sm" id="quitBtn">🗺️</button>
+        <button class="btn check sm" id="checkBtn">تحقّق ✓</button>
+      </div>
+    </div>`;
+  $("#quitBtn").onclick=()=>{ stopTimer(); sClick(); buildMap(); show("scMap"); };
+  $("#hintBtn").onclick=()=>useHint(c);
+  $("#checkBtn").onclick=()=>checkAnswer(m,c);
+  if(c.type==="mcq"){ document.querySelectorAll("#opts .opt").forEach(o=>o.onclick=()=>{ document.querySelectorAll("#opts .opt").forEach(z=>z.classList.remove("correct")); o.dataset.sel="1"; document.querySelectorAll("#opts .opt").forEach(z=>z.style.borderColor=""); o.style.borderColor="var(--cyan)"; }); }
+  if(c.type==="order") renderOrder(c);
+  if(c.type==="write"){ setFrame("pvTarget", c.target); const inp=$("#inp"); const upd=()=>setFrame("pvOut", inp.value); inp.oninput=upd; upd(); }
+  if(c.timeLimit) startTimer(c);
+}
+function chTypeLabel(c){ return {mcq:"CHOICE · اختيار",missing:"MISSING · أكمل الناقص",repair:"REPAIR · إصلاح كود",order:"ORDER · رتّب",write:(c.boss?"BOSS · بناء":"BUILD · اكتب")}[c.type]||"CHALLENGE"; }
+
+function renderOrder(c){ ch.order = shuffle(c.lines.map((t,i)=>({t,i}))); paintOrder(); }
+function paintOrder(){ const box=$("#ord"); if(!box) return; box.innerHTML=ch.order.map((it,pos)=>`<div class="ordline"><span class="txt">${esc(it.t)}</span><div class="ordbtns"><button data-p="${pos}" data-d="-1">▲</button><button data-p="${pos}" data-d="1">▼</button></div></div>`).join("");
+  box.querySelectorAll("button").forEach(b=>b.onclick=()=>{ const p=+b.dataset.p, d=+b.dataset.d, np=p+d; if(np<0||np>=ch.order.length) return; const a=ch.order; [a[p],a[np]]=[a[np],a[p]]; sClick(); paintOrder(); }); }
+
+/* ===== المؤقّت ===== */
+function startTimer(c){ ch.timeLeft=c.timeLimit; const el=$("#chTimer"); ch.timerId=setInterval(()=>{ ch.timeLeft--; if(el){ el.textContent="⏱️ "+ch.timeLeft+"s"; el.classList.toggle("low",ch.timeLeft<=5);} if(ch.timeLeft<=0){ stopTimer(); onWrong(WEBCRAFT.zones[flow.zi].missions[flow.mi].challenges[flow.ci], true); } },1000); }
+function stopTimer(){ if(ch&&ch.timerId){ clearInterval(ch.timerId); ch.timerId=null; } }
+
+/* ===== التحقّق ===== */
+function norm(s){ return String(s||"").replace(/\s+/g,"").toLowerCase(); }
+function checkAnswer(m,c){ if(ch.solved) return; let correct=false;
+  if(c.type==="mcq"){ const sel=document.querySelector('#opts .opt[data-sel="1"]'); if(!sel){ toast("👆 اختر إجابة الأول"); return; } correct=(+sel.dataset.i===c.answer);
+    document.querySelectorAll("#opts .opt").forEach(o=>{ o.classList.add("dis"); if(+o.dataset.i===c.answer)o.classList.add("correct"); else if(o===sel&&!correct)o.classList.add("wrong"); }); }
+  else if(c.type==="missing"){ const v=$("#inp").value; correct=(norm(v)===norm(c.answer)||norm(v)===norm("<"+c.answer+">")); }
+  else if(c.type==="repair"){ correct=(norm($("#inp").value)===norm(c.solution)); }
+  else if(c.type==="order"){ correct=ch.order.every((it,pos)=>it.i===c.correct[pos]); }
+  else if(c.type==="write"){ const v=$("#inp").value; correct=(c.requires||[]).every(r=>new RegExp(r,"i").test(v)); }
+  if(correct) onCorrect(m,c); else onWrong(c,false);
+}
+function onCorrect(m,c){ ch.solved=true; stopTimer(); sOk();
+  S.combo++; if(S.combo>S.bestCombo)S.bestCombo=S.combo; if(S.combo>=2) toast("🔥 COMBO x"+S.combo+"!");
+  // scoring: correctness base − hints − extra tries (min 40%)
+  let gain=c.xp; gain-=ch.hints*Math.round(c.xp*0.15); gain-=Math.max(0,ch.tries)*Math.round(c.xp*0.1); gain=Math.max(Math.round(c.xp*0.4), gain);
+  if(S.combo>=3) gain=Math.round(gain*1.1);
+  addXP(gain); S.coins+=Math.round(gain/6); save(); updateHUD();
+  const b=$("#checkBtn"); if(b){ const r=b.getBoundingClientRect(); xpFloat(r.left, r.top, "+"+gain+" ⚡"); }
+  const fb=$("#fb"); fb.className="feedback good show"; fb.innerHTML=`<div class="fi">✅</div><div class="ft">${["ممتاز! جزء من المدينة اشتغل ⚡","عاش! العنصر اترجّع 🔧","صحّ! الطاقة رجعت 💡"][Math.random()*3|0]}<br><span style="color:var(--muted)">${c.explanation||""}</span></div>`;
+  $("#checkBtn").textContent="التالي ▶"; $("#checkBtn").className="btn sm"; $("#checkBtn").onclick=()=>{ sClick(); nextChallenge(m); };
+  $("#hintBtn").style.display="none";
+}
+function onWrong(c, timeout){ ch.tries++; S.combo=Math.max(0,S.combo-1); save(); updateHUD(); sBad();
+  const fb=$("#fb"); fb.className="feedback bad show";
+  let msg = timeout? "⏰ خلص الوقت! جرّب مرة ثانية بهدوء." : (ch.tries===1? "مش هكي 👀 ركّز شوية…" : "قريب! خذ تلميح 👇");
+  fb.innerHTML=`<div class="fi">${timeout?"⏰":"🤔"}</div><div class="ft">${msg}</div>`;
+  // escalating hints
+  if(ch.tries>=1 && (c.hints&&c.hints[0]) && ch.hints<1){ /* offer */ }
+  if(ch.tries>=2){ autoHint(c); }
+  if(ch.tries>=3){ showSolution(c); }
+  if(c.type==="mcq"){ /* allow re-pick */ document.querySelectorAll("#opts .opt").forEach(o=>{o.classList.remove("dis","wrong");}); }
+}
+function useHint(c){ sClick(); if(!c.hints||!c.hints.length){ return; } if(ch.hints>=c.hints.length){ showSolution(c); return; }
+  const h=c.hints[ch.hints]; ch.hints++; S.hintsUsed=(S.hintsUsed||0)+1; save();
+  const fb=$("#fb"); fb.className="feedback hint show"; fb.innerHTML=`<div class="fi">💡</div><div class="ft">تلميح ${ch.hints}: ${h}</div>`;
+}
+function autoHint(c){ if(!c.hints)return; if(ch.hints>=c.hints.length) return showSolution(c); const h=c.hints[ch.hints]; ch.hints++;
+  const fb=$("#fb"); fb.className="feedback hint show"; fb.innerHTML=`<div class="fi">💡</div><div class="ft">تلميح ${ch.hints}: ${h}</div>`; }
+function showSolution(c){ const fb=$("#fb"); fb.className="feedback hint show"; fb.innerHTML=`<div class="fi">🧠</div><div class="ft"><b>الحل:</b><br><span style="color:var(--muted); white-space:pre-wrap">${esc(c.explanation||c.solution||c.answer||"")}</span></div>`; }
+
+function nextChallenge(m){ flow.ci++; if(flow.ci<m.challenges.length){ renderPhase(); } else { completeMission(m); } }
+
+/* ===== إتمام المهمة ===== */
+function completeMission(m){ S.missionsDone[m.id]=true; const z=WEBCRAFT.zones[flow.zi];
+  // unlock next zone if this zone's missions done
+  const allDone=z.missions.every(mm=>S.missionsDone[mm.id]);
+  let unlockedZone=null;
+  if(allDone){ const next=WEBCRAFT.zones[flow.zi+1]; if(next && !S.zonesUnlocked.includes(next.id)){ S.zonesUnlocked.push(next.id); next.locked=false; unlockedZone=next; } }
+  addXP(m.reward.xp); S.coins+=m.reward.coins; if(!S.badges.includes(m.reward.badge)) S.badges.push(m.reward.badge);
+  save(); updateHUD(); cinematic(m, unlockedZone);
+}
+function cinematic(m, unlockedZone){ sWin(); const c=$("#cine"); const card=$("#cineCard");
+  card.innerHTML=`<div class="mc">✦ MISSION COMPLETE ✦</div><h2>${m.title}</h2>
+    <p style="color:var(--muted); font-size:15px; line-height:1.8">أعدت تشغيل جزء من المدينة! 🌆 المبنى اضاء من جديد.</p>
+    <div class="badge-pop">${m.reward.badgeIcon||"🏆"}</div>
+    <div class="reward-row"><span class="pill">⚡ +${m.reward.xp} XP</span><span class="pill">🪙 +${m.reward.coins}</span><span class="pill">🏅 ${m.reward.badge}</span></div>
+    <div class="storybar" style="text-align:right">${m.reveal}</div>
+    ${unlockedZone?`<div class="pill" style="display:block; margin:10px 0; border-color:var(--cyan); color:var(--cyan)">🔓 فتحت حي جديد: ${unlockedZone.name}</div>`:""}
+    <div style="margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn" id="cineMap">🗺️ ارجع للخريطة</button>
+    </div>`;
+  c.classList.add("show");
+  $("#cineMap").onclick=()=>{ sClick(); c.classList.remove("show"); buildMap(); show("scMap"); if(unlockedZone) sUnlock(); };
+}
+
+/* ===== أدوات ===== */
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function setFrame(id, html){ const f=$("#"+id); if(!f) return; f.srcdoc=`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:12px;margin:0;color:#0e1c30;background:#fff}h1{margin:.2em 0}p{margin:.2em 0;color:#333}</style></head><body>${html}</body></html>`; }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===== أزرار عامة ===== */
+function refreshStart(){ const has=S.name||S.xp>0||Object.keys(S.missionsDone).length; $("#resetBtn").style.display=has?"inline-flex":"none";
+  if(S.name)$("#nameInput").value=S.name;
+  if(has){ $("#resumeNote").style.display="block"; $("#resumeNote").innerHTML=`👋 أهلاً برجوعك <b>${S.name||"Architect"}</b> · ⚡${S.xp} XP · مستوى ${S.level}`; $("#enterBtn").textContent="▶ أكمل"; }
+  else { $("#resumeNote").style.display="none"; $("#enterBtn").textContent="🚀 ادخل المدينة"; } }
+$("#enterBtn").onclick=()=>{ sClick(); const nm=$("#nameInput").value.trim(); if(nm)S.name=nm; if(!S.name){ toast("✍️ اكتب اسمك الأول"); $("#nameInput").focus(); return; } save(); updateHUD(); buildMap(); show("scMap"); };
+$("#resetBtn").onclick=()=>{ if(confirm("تبدأ من جديد؟ راح ينمسح كل تقدّمك.")){ localStorage.removeItem(KEY); S={ name:"",xp:0,coins:0,level:1,combo:0,bestCombo:0,badges:[],streak:0,missionsDone:{},zonesUnlocked:["headings"],curZone:0,curMission:0,curCh:0,attempts:0,hintsUsed:0 }; WEBCRAFT.zones.forEach((z,i)=>{ if(i>0)z.locked=true; }); $("#nameInput").value=""; refreshStart(); updateHUD(); toast("🔄 بداية جديدة"); } };
+$("#mapBtn").onclick=()=>{ sClick(); stopTimer(); buildMap(); show("scMap"); };
+$("#sndBtn").onclick=()=>{ sndOn=!sndOn; $("#sndBtn").textContent=sndOn?"🔊":"🔇"; if(sndOn)sClick(); };
+$("#nameInput").addEventListener("keydown",e=>{ if(e.key==="Enter")$("#enterBtn").click(); });
+addEventListener("resize",()=>{ if($("#scMap").classList.contains("active")) drawCity(); });
+if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) document.body.classList.add("reduce-motion");
+
+/* إقلاع */
+load(); WEBCRAFT.zones.forEach(z=>{ if(S.zonesUnlocked.includes(z.id)) z.locked=false; }); refreshStart(); updateHUD();
+</script>
+</body>
+</html>
